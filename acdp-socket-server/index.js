@@ -48,8 +48,24 @@ function sendTo(agentId, data) {
 
 const handlers = new Handlers(state, auth, approvalEngine, logger, broadcast, sendTo);
 
-// --- HTTP server (serves dashboard + /api/state) ---
+// --- HTTP server (serves dashboard + /api/state + /health) ---
 const httpServer = http.createServer((req, res) => {
+  const { pathname } = url.parse(req.url);
+
+  if (pathname === '/health') {
+    const snap = state.getSnapshot();
+    const body = JSON.stringify({
+      ok: true,
+      version: process.env.npm_package_version || '0.7.0',
+      agents_connected: Object.keys(snap.agents || {}).length,
+      active_locks: (snap.locks || []).length,
+      uptime_seconds: Math.floor(process.uptime()),
+    });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(body);
+    return;
+  }
+
   if (dashboard.handleHttp(req, res)) return;
 
   res.writeHead(404, { 'Content-Type': 'text/plain' });
