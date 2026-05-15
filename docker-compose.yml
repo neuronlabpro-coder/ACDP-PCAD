@@ -1,11 +1,5 @@
 version: "3.9"
 
-networks:
-  neuronguard:
-    driver: bridge
-  dokploy-network:
-    external: true
-
 services:
   acdp:
     build:
@@ -14,40 +8,19 @@ services:
     ports:
       - "3100:3100"
     environment:
-      # Puerto del servidor WebSocket + HTTP
       ACDP_PORT: ${ACDP_PORT:-3100}
-
-      # Token de autenticación para agentes y dashboard
-      # OBLIGATORIO: genera con: openssl rand -hex 16
       ACDP_TOKEN: ${ACDP_TOKEN}
-
-      # Owner: nombre de la máquina/agente que tiene rol owner
       ACDP_OWNER: ${ACDP_OWNER:-neuronguard-engine}
-
-      # Sub-owner opcional
       ACDP_SUB_OWNER: ${ACDP_SUB_OWNER:-}
-
-      # TTL por defecto de locks en minutos
       ACDP_TTL_MINUTES: ${ACDP_TTL_MINUTES:-15}
-
-      # Timeout para commits pendientes
       ACDP_COMMIT_TIMEOUT_MINUTES: ${ACDP_COMMIT_TIMEOUT_MINUTES:-10}
-
-      # IMPORTANTE: permite conexiones desde fuera de localhost (requerido en Docker)
       ACDP_ALLOW_REMOTE: "1"
-
-      # Forzar regeneración de config en cada arranque (recomendado en Docker)
       ACDP_FORCE_CONFIG: "1"
-
       NODE_ENV: production
-
     volumes:
-      # Persistir config.json, governance.json y logs entre reinicios
       - acdp_data:/app/acdp-socket-server
       - acdp_governance:/app/acdp
-
     restart: unless-stopped
-
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3100/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
       interval: 30s
@@ -55,13 +28,7 @@ services:
       retries: 3
       start_period: 15s
 
-
-    labels:
-
-      # Rate limit
-      - "traefik.http.middlewares.acdp-ratelimit.ratelimit.average=30"
-      - "traefik.http.middlewares.acdp-ratelimit.ratelimit.period=1m"
-
 volumes:
   acdp_data:
   acdp_governance:
+
