@@ -1,5 +1,5 @@
 FROM node:20-alpine
-
+# build: 2026-05-15
 WORKDIR /app
 
 # Instalar dependencias
